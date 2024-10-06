@@ -3,6 +3,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
+import errorHandler from './middlewares/errorHandler';
 
 const app = express();
 
@@ -46,4 +47,5 @@ import userRouter from './routes/user.routes';
 
 app.use('/api/v1/users', userRouter);
 
+app.use(errorHandler);
 export { httpServer };
