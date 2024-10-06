@@ -43,8 +43,7 @@ const userSchema = new Schema<UserDocument>(
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
   try {
-    const saltOrRound = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, saltOrRound);
+    this.password = await bcrypt.hash(this.password, 10);
     return next();
   } catch (error) {
     return next(error as Error);
@@ -52,7 +51,12 @@ userSchema.pre('save', async function (next) {
 });
 
 userSchema.methods.validatePassword = async function (password: string) {
-  return await bcrypt.compare(password, this.password);
+  try {
+    const isValid = await bcrypt.compare(password, this.password);
+    return isValid;
+  } catch (error) {
+    console.log('bcrypt error', error);
+  }
 };
 
 userSchema.methods.generateAccessToken = function () {

@@ -3,6 +3,7 @@ import { ApiError } from '../utils/ApiErrors';
 import asyncHandler from '../utils/asyncHandler';
 import { ApiResponse } from '../utils/ApiResponse';
 import { Error } from 'mongoose';
+import { ExpressRequestInterface } from 'models/expressRequest.interface';
 
 const generateAccessAndRefreshTokens = async (userId: string) => {
   try {
@@ -122,13 +123,15 @@ const userLogin = asyncHandler(async (req, res) => {
   }
 
   // Looks for the user in database using either
-  const user = await User.findOne({ $or: [{ username }, { email }] });
+  const user = await User.findOne({ $or: [{ username }, { email }] }).select(
+    '+password',
+  );
   if (!user) {
     throw new ApiError(404, 'User does not exist');
   }
 
   // Checks for the validity of the password
-  const isPasswordValid = user.validatePassword(password);
+  const isPasswordValid = await user.validatePassword(password);
   if (!isPasswordValid) {
     throw new ApiError(401, 'Unauthorized - Invalid Password');
   }
@@ -170,4 +173,35 @@ const userLogin = asyncHandler(async (req, res) => {
     );
 });
 
-export { registerUser, userLogin };
+const getUser = asyncHandler(async (req: ExpressRequestInterface, res) => {
+  return res
+    .status(200)
+    .send(new ApiResponse(200, req.user, 'User Fetched Successfully'));
+});
+
+const logoutUser = asyncHandler(async (req: ExpressRequestInterface, res) => {
+  await User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $unset: {
+        refreshToken: 1,
+      },
+    },
+    {
+      new: true,
+    },
+  );
+
+  const options = {
+    httpOnly: true,
+    secure: true,
+  };
+
+  return res
+    .status(200)
+    .clearCookie('accessToken', options)
+    .clearCookie('refreshToken', options)
+    .json(new ApiResponse(200, {}, 'User Logged Out'));
+});
+
+export { registerUser, userLogin, getUser, logoutUser };
