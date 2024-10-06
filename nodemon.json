@@ -1,0 +1,5 @@
+{
+  "watch": ["src"],
+  "ext": ".ts,.js",
+  "exec": "node --es-module-specifier-resolution=node --loader ts-node/esm --no-warnings src/index.ts"
+}
