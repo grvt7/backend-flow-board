@@ -116,6 +116,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
 const userLogin = asyncHandler(async (req, res) => {
   const { username, email, password } = req.body;
+  console.log({ username, email, password });
 
   // Checks if either one is available
   if (!(username || email)) {
@@ -130,56 +131,60 @@ const userLogin = asyncHandler(async (req, res) => {
     throw new ApiError(404, 'User does not exist');
   }
 
-  // Checks for the validity of the password
-  const isPasswordValid = await user.validatePassword(password);
-  if (!isPasswordValid) {
-    throw new ApiError(401, 'Unauthorized - Invalid Password');
-  }
+  return res.status(200).json(new ApiResponse(201, user, 'succss'));
 
-  // Generates the access and refresh token
-  const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
-    user._id as string,
-  );
+  // // Checks for the validity of the password
+  // const isPasswordValid = await user.validatePassword(password);
+  // if (!isPasswordValid) {
+  //   throw new ApiError(401, 'Unauthorized - Invalid Password');
+  // }
 
-  // Looks for the user with the userId
-  const loggedInUser = await User.findById(user._id).select(
-    '-password -refreshToken',
-  );
+  // // Generates the access and refresh token
+  // const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
+  //   user._id as string,
+  // );
+
+  // // Looks for the user with the userId
+  // const loggedInUser = await User.findById(user._id).select(
+  //   '-password -refreshToken',
+  // );
 
   // Set acess token and refresh tokens in the cookies
-  res.cookie('accessToken', accessToken, {
-    httpOnly: true,
-    secure: true,
-    sameSite: 'lax',
-    expires: new Date(Date.now() + 15 * 60 * 1000), // Expiration in 15 min
-  });
+  // res.cookie('accessToken', accessToken, {
+  //   httpOnly: true,
+  //   secure: true,
+  //   sameSite: 'lax',
+  //   expires: new Date(Date.now() + 15 * 60 * 1000), // Expiration in 15 min
+  // });
 
-  res.cookie('refreshToken', refreshToken, {
-    httpOnly: true,
-    secure: true,
-    sameSite: 'lax',
-    expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // Expiration in 30 days
-  });
+  // res.cookie('refreshToken', refreshToken, {
+  //   httpOnly: true,
+  //   secure: true,
+  //   sameSite: 'lax',
+  //   expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // Expiration in 30 days
+  // });
 
-  // Return data
-  return res
-    .status(200)
-    .json(
-      new ApiResponse(
-        200,
-        { data: loggedInUser, accessToken, refreshToken },
-        'User logged in successfully',
-      ),
-    );
+  // // Return data
+  // return res
+  //   .status(200)
+  //   .json(
+  //     new ApiResponse(
+  //       200,
+  //       { data: loggedInUser, accessToken, refreshToken },
+  //       'User logged in successfully',
+  //     ),
+  //   );
 });
 
 const getUser = asyncHandler(async (req: ExpressRequestInterface, res) => {
+  console.log('data', { req });
   return res
     .status(200)
     .send(new ApiResponse(200, req.user, 'User Fetched Successfully'));
 });
 
 const logoutUser = asyncHandler(async (req: ExpressRequestInterface, res) => {
+  console.log({ req });
   await User.findByIdAndUpdate(
     req.user?._id,
     {
